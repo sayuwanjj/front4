@@ -1,14 +1,20 @@
-import React from "react";
+﻿import React from "react";
 import UserItem from "./UserItem";
-export default function UsersList({ users, onEdit, onDelete }) {
-    if (!users.length) {
-        return <div className="empty">Пользователей пока нет</div>;
+
+export default function UsersList({ products, onEdit, onDelete }) {
+    if (!products.length) {
+        return <div className="empty">No products yet.</div>;
     }
+
     return (
         <div className="list">
-            {users.map((u) => (
-                <UserItem key={u.id} user={u} onEdit={onEdit} onDelete=
-                    {onDelete} />
+            {products.map((product) => (
+                <UserItem
+                    key={product.id}
+                    product={product}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                />
             ))}
         </div>
     );

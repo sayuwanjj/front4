@@ -1,19 +1,18 @@
-$bg: #0b0f19;
-$panel: rgba(255, 255, 255, 0.03);
-$border: rgba(255, 255, 255, 0.10);
-$text: #e7eaf3;
-$primary: rgba(99, 102, 241, 0.55);
-$primaryBg: rgba(99, 102, 241, 0.18);
-$danger: rgba(239, 68, 68, 0.45);
-$dangerBg: rgba(239, 68, 68, 0.12);
+﻿$bg: #0e141f;
+$panel: rgba(255, 255, 255, 0.04);
+$border: rgba(255, 255, 255, 0.14);
+$text: #f1f4fa;
+$primary: #1db954;
+$primaryDark: #168a3e;
+$danger: #d13c3c;
 
-@mixin card($radius: 12px) {
+@mixin card($radius: 14px) {
     border-radius: $radius;
     border: 1px solid $border;
     background: $panel;
 }
 
-@mixin container($w: 900px) {
+@mixin container($w: 1060px) {
     max-width: $w;
     width: 100%;
     margin: 0 auto;
@@ -23,42 +22,42 @@ $dangerBg: rgba(239, 68, 68, 0.12);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: $bg;
     color: $text;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: radial-gradient(circle at 10% 10%, #1a2539 0%, #0e141f 50%, #080d16 100%);
 }
 
 .header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 16, 28, 0.9);
 
     &__inner {
         @include container();
-        padding: 14px 16px;
+        padding: 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
 
     &__right {
-        opacity: 0.75;
+        opacity: 0.8;
         font-size: 13px;
     }
 }
 
 .brand {
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.3px;
 }
 
 .main {
     flex: 1;
-    display: flex;
 }
 
 .container {
     @include container();
-    padding: 16px;
+    padding: 20px 16px 28px;
 }
 
 .toolbar {
@@ -66,89 +65,150 @@ $dangerBg: rgba(239, 68, 68, 0.12);
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 18px;
 
     .title {
         margin: 0;
-        font-size: 20px;
+        font-size: 30px;
     }
 }
 
-// ===== Buttons =====
 .btn {
-    padding: 8px 10px;
+    padding: 9px 12px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
     color: inherit;
     cursor: pointer;
+    transition: 0.2s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
 
     &--primary {
-        background: $primaryBg;
-        border: 1px solid $primary;
+        background: $primary;
+        border-color: $primary;
+        color: #08110a;
+        font-weight: 600;
+
+        &:hover {
+            background: $primaryDark;
+            border-color: $primaryDark;
+            color: #ffffff;
+        }
     }
 
     &--danger {
-        background: $dangerBg;
-        border: 1px solid $danger;
+        background: rgba(209, 60, 60, 0.14);
+        border-color: rgba(209, 60, 60, 0.55);
+
+        &:hover {
+            background: rgba(209, 60, 60, 0.24);
+        }
     }
 }
 
 .list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 14px;
 }
 
 .empty {
     padding: 18px;
     border-radius: 12px;
-    border: 1px dashed rgba(255, 255, 255, 0.18);
-    opacity: 0.85;
+    border: 1px dashed rgba(255, 255, 255, 0.26);
 }
 
-.userRow {
-    @include card(12px);
+.productCard {
+    @include card(14px);
+    overflow: hidden;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+}
+
+.productMedia {
+    height: 180px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.productImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    &--placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+}
+
+.productBody {
     padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.userMain {
+.productTopRow {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.productTitle {
+    margin: 0;
+    font-size: 18px;
+}
+
+.productCategory {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(29, 185, 84, 0.18);
+    border: 1px solid rgba(29, 185, 84, 0.55);
+    white-space: nowrap;
+}
+
+.productDescription {
+    margin: 0;
+    line-height: 1.45;
+    color: rgba(241, 244, 250, 0.9);
+}
+
+.productMeta {
+    display: flex;
     flex-wrap: wrap;
+    gap: 8px;
+}
 
-    .userId {
-        opacity: 0.7;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .userName {
-        font-weight: 600;
-    }
-
-    .userAge {
-        opacity: 0.85;
-    }
+.metaBadge {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .userActions {
     display: flex;
     gap: 8px;
+    margin-top: 4px;
 }
 
 .footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 16, 28, 0.9);
 
     &__inner {
         @include container();
         padding: 14px 16px;
-        opacity: 0.7;
+        opacity: 0.75;
         font-size: 13px;
     }
 }
@@ -156,7 +216,7 @@ $dangerBg: rgba(239, 68, 68, 0.12);
 .backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.65);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -165,11 +225,11 @@ $dangerBg: rgba(239, 68, 68, 0.12);
 
 .modal {
     width: 100%;
-    max-width: 420px;
+    max-width: 640px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: #0f1526;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #10192c;
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.4);
     overflow: hidden;
 
     &__header {
@@ -188,7 +248,6 @@ $dangerBg: rgba(239, 68, 68, 0.12);
         display: flex;
         justify-content: flex-end;
         gap: 8px;
-        margin-top: 4px;
     }
 }
 
@@ -196,17 +255,21 @@ $dangerBg: rgba(239, 68, 68, 0.12);
     width: 34px;
     height: 34px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     background: transparent;
     color: inherit;
     cursor: pointer;
 }
 
 .form {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
+
+    &__wide {
+        grid-column: 1 / -1;
+    }
 }
 
 .label {
@@ -214,14 +277,33 @@ $dangerBg: rgba(239, 68, 68, 0.12);
     flex-direction: column;
     gap: 6px;
     font-size: 13px;
-    opacity: 0.95;
 }
 
 .input {
     padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
     color: inherit;
     outline: none;
+
+    &--textarea {
+        min-height: 88px;
+        resize: vertical;
+    }
+}
+
+@media (max-width: 720px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+
+        .title {
+            font-size: 24px;
+        }
+    }
+
+    .form {
+        grid-template-columns: 1fr;
+    }
 }

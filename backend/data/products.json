@@ -1,0 +1,102 @@
+[
+  {
+    "id": "prd001",
+    "name": "Aurora Mechanical Keyboard",
+    "category": "Peripherals",
+    "description": "Compact 75% keyboard with hot-swap switches and RGB.",
+    "price": 109.99,
+    "stock": 24,
+    "rating": 4.7,
+    "imageUrl": "https://mechanicalkeyboards.com/cdn/shop/files/14473_63ae05134e657_VED108-Aurora.jpg?v=1707271391&width=2048"
+  },
+  {
+    "id": "prd002",
+    "name": "Pulse Wireless Mouse",
+    "category": "Peripherals",
+    "description": "Lightweight gaming mouse with 26K DPI sensor.",
+    "price": 59.5,
+    "stock": 41,
+    "rating": 4.5,
+    "imageUrl": "https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "prd003",
+    "name": "Nebula 27 Monitor",
+    "category": "Displays",
+    "description": "27-inch IPS 165Hz monitor with 1440p resolution.",
+    "price": 299,
+    "stock": 12,
+    "rating": 4.8,
+    "imageUrl": "https://www.sceptre.com/image/cache/data/product_gallery/1390-C275B-QWN168W/2-1500x1044.jpg"
+  },
+  {
+    "id": "prd004",
+    "name": "Drift USB-C Dock",
+    "category": "Accessories",
+    "description": "8-in-1 USB-C dock with HDMI, Ethernet and SD slots.",
+    "price": 79,
+    "stock": 33,
+    "rating": 4.4,
+    "imageUrl": "https://media.startech.com/cms/products/gallery_large/116e-usbc-dock.main.jpg"
+  },
+  {
+    "id": "prd005",
+    "name": "Echo Studio Headset",
+    "category": "Audio",
+    "description": "Closed-back headset with detachable boom microphone.",
+    "price": 129,
+    "stock": 18,
+    "rating": 4.6,
+    "imageUrl": "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "prd006",
+    "name": "Spark Portable SSD 1TB",
+    "category": "Storage",
+    "description": "NVMe portable SSD with up to 1050 MB/s transfer speed.",
+    "price": 119.99,
+    "stock": 26,
+    "rating": 4.7,
+    "imageUrl": "https://media.extra.com/i/aurora/100348923_100_02?fmt=auto&w=721"
+  },
+  {
+    "id": "prd007",
+    "name": "Orbit Webcam Pro",
+    "category": "Streaming",
+    "description": "4K webcam with auto-focus and noise-canceling mics.",
+    "price": 149,
+    "stock": 14,
+    "rating": 4.3,
+    "imageUrl": "https://media.officedepot.com/images/f_auto,q_auto,e_sharpen,h_450/products/954170/954170_vw_etz00_1011050826/954170"
+  },
+  {
+    "id": "prd008",
+    "name": "Volt GaN Charger 100W",
+    "category": "Power",
+    "description": "Fast multi-port GaN charger for laptop and phone.",
+    "price": 64.9,
+    "stock": 57,
+    "rating": 4.5,
+    "imageUrl": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    "id": "prd009",
+    "name": "Atlas Laptop Stand",
+    "category": "Accessories",
+    "description": "Adjustable aluminum stand for 13 to 17-inch laptops.",
+    "price": 39.99,
+    "stock": 48,
+    "rating": 4.2,
+    "imageUrl": "https://www.tradeinn.com/f/14258/142580077/marvo-atlas-43-laptop-stand.webp"
+  },
+  {
+    "id": "prd010",
+    "name": "Nova Bluetooth Speaker",
+    "category": "Audio",
+    "description": "Portable speaker with IPX7 water resistance.",
+    "price": 89,
+    "stock": 22,
+    "rating": 4.4,
+    "imageUrl": "https://content.etilize.com/Right/1083983485.jpg"
+  }
+]
