@@ -1,13 +1,92 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const { nanoid } = require("nanoid");
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 const dataDir = path.join(__dirname, "data");
 const dataFile = path.join(dataDir, "products.json");
+const swaggerDefinition = {
+    openapi: "3.0.3",
+    info: {
+        title: "Users API documentation",
+        version: "1.0.0",
+        description: "Interactive CRUD documentation for the users resource.",
+    },
+    servers: [
+        {
+            url: `http://localhost:${port}`,
+            description: "Local development server",
+        },
+    ],
+    tags: [
+        {
+            name: "Users",
+            description: "CRUD operations for users",
+        },
+    ],
+    components: {
+        schemas: {
+            UserInput: {
+                type: "object",
+                required: ["name", "category", "description", "price", "stock"],
+                properties: {
+                    name: { type: "string", example: "Aurora Mechanical Keyboard" },
+                    category: { type: "string", example: "Peripherals" },
+                    description: {
+                        type: "string",
+                        example: "Compact 75% keyboard with hot-swap switches and RGB.",
+                    },
+                    price: { type: "number", format: "float", minimum: 0, example: 109.99 },
+                    stock: { type: "integer", minimum: 0, example: 24 },
+                    rating: { type: "number", format: "float", minimum: 0, maximum: 5, example: 4.7 },
+                    imageUrl: { type: "string", example: "https://example.com/image.jpg" },
+                },
+            },
+            UserPatchInput: {
+                type: "object",
+                minProperties: 1,
+                properties: {
+                    name: { type: "string", example: "Aurora Mechanical Keyboard" },
+                    category: { type: "string", example: "Peripherals" },
+                    description: {
+                        type: "string",
+                        example: "Compact 75% keyboard with hot-swap switches and RGB.",
+                    },
+                    price: { type: "number", format: "float", minimum: 0, example: 109.99 },
+                    stock: { type: "integer", minimum: 0, example: 24 },
+                    rating: { type: "number", format: "float", minimum: 0, maximum: 5, example: 4.7 },
+                    imageUrl: { type: "string", example: "https://example.com/image.jpg" },
+                },
+            },
+            ErrorResponse: {
+                type: "object",
+                properties: {
+                    error: { type: "string", example: "Product not found" },
+                },
+            },
+            ValidationErrorResponse: {
+                type: "object",
+                properties: {
+                    error: { type: "string", example: "Validation error" },
+                    details: {
+                        type: "array",
+                        items: { type: "string" },
+                        example: ["name is required"],
+                    },
+                },
+            },
+        },
+    },
+};
+const swaggerSpec = swaggerJsdoc({
+    definition: swaggerDefinition,
+    apis: [__filename],
+});
 
 app.use(
     cors({
@@ -18,6 +97,10 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
+app.get("/api-docs.json", (req, res) => {
+    res.json(swaggerSpec);
+});
 
 app.use((req, res, next) => {
     res.on("finish", () => {
@@ -241,6 +324,77 @@ function normalizeProductInput(body) {
     };
 }
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - id
+ *         - name
+ *         - category
+ *         - description
+ *         - price
+ *         - stock
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: prd001
+ *         name:
+ *           type: string
+ *           example: Aurora Mechanical Keyboard
+ *         category:
+ *           type: string
+ *           example: Peripherals
+ *         description:
+ *           type: string
+ *           example: Compact 75% keyboard with hot-swap switches and RGB.
+ *         price:
+ *           type: number
+ *           format: float
+ *           minimum: 0
+ *           example: 109.99
+ *         stock:
+ *           type: integer
+ *           minimum: 0
+ *           example: 24
+ *         rating:
+ *           type: number
+ *           format: float
+ *           minimum: 0
+ *           maximum: 5
+ *           example: 4.7
+ *         imageUrl:
+ *           type: string
+ *           nullable: true
+ *           example: https://example.com/image.jpg
+ */
+
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get all products
+ *     description: Returns all products. You can optionally filter by category with the `category` query parameter.
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Filter products by category.
+ *     responses:
+ *       200:
+ *         description: Products list.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ */
 app.get("/api/products", (req, res) => {
     const category = req.query.category?.trim().toLowerCase();
     const result = category
@@ -250,12 +404,64 @@ app.get("/api/products", (req, res) => {
     res.json(result);
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get user by id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       404:
+ *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.get("/api/products/:id", (req, res) => {
     const product = findProductOr404(req.params.id, res);
     if (!product) return;
     res.json(product);
 });
 
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     tags: [Products]
+ *     summary: Create user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserInput'
+ *     responses:
+ *       201:
+ *         description: User created.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Validation error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ */
 app.post("/api/products", (req, res) => {
     const errors = validateProductPayload(req.body, { partial: false });
     if (errors.length) {
@@ -279,6 +485,44 @@ app.post("/api/products", (req, res) => {
     return res.status(201).json(newProduct);
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   patch:
+ *     tags: [Products]
+ *     summary: Update user by id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserPatchInput'
+ *     responses:
+ *       200:
+ *         description: User updated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Validation error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *       404:
+ *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.patch("/api/products/:id", (req, res) => {
     const product = findProductOr404(req.params.id, res);
     if (!product) return;
@@ -303,6 +547,28 @@ app.patch("/api/products/:id", (req, res) => {
     return res.json(product);
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   delete:
+ *     tags: [Products]
+ *     summary: Delete user by id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: User deleted.
+ *       404:
+ *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.delete("/api/products/:id", (req, res) => {
     const exists = products.some((item) => item.id === req.params.id);
     if (!exists) {
