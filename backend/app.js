@@ -3,592 +3,571 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const { nanoid } = require("nanoid");
-const swaggerJsdoc = require("swagger-jsdoc");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const swaggerUi = require("swagger-ui-express");
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 const dataDir = path.join(__dirname, "data");
-const dataFile = path.join(dataDir, "products.json");
-const swaggerDefinition = {
-    openapi: "3.0.3",
-    info: {
-        title: "Users API documentation",
-        version: "1.0.0",
-        description: "Interactive CRUD documentation for the users resource.",
-    },
-    servers: [
-        {
-            url: `http://localhost:${port}`,
-            description: "Local development server",
-        },
-    ],
-    tags: [
-        {
-            name: "Users",
-            description: "CRUD operations for users",
-        },
-    ],
-    components: {
-        schemas: {
-            UserInput: {
-                type: "object",
-                required: ["name", "category", "description", "price", "stock"],
-                properties: {
-                    name: { type: "string", example: "Aurora Mechanical Keyboard" },
-                    category: { type: "string", example: "Peripherals" },
-                    description: {
-                        type: "string",
-                        example: "Compact 75% keyboard with hot-swap switches and RGB.",
-                    },
-                    price: { type: "number", format: "float", minimum: 0, example: 109.99 },
-                    stock: { type: "integer", minimum: 0, example: 24 },
-                    rating: { type: "number", format: "float", minimum: 0, maximum: 5, example: 4.7 },
-                    imageUrl: { type: "string", example: "https://example.com/image.jpg" },
-                },
-            },
-            UserPatchInput: {
-                type: "object",
-                minProperties: 1,
-                properties: {
-                    name: { type: "string", example: "Aurora Mechanical Keyboard" },
-                    category: { type: "string", example: "Peripherals" },
-                    description: {
-                        type: "string",
-                        example: "Compact 75% keyboard with hot-swap switches and RGB.",
-                    },
-                    price: { type: "number", format: "float", minimum: 0, example: 109.99 },
-                    stock: { type: "integer", minimum: 0, example: 24 },
-                    rating: { type: "number", format: "float", minimum: 0, maximum: 5, example: 4.7 },
-                    imageUrl: { type: "string", example: "https://example.com/image.jpg" },
-                },
-            },
-            ErrorResponse: {
-                type: "object",
-                properties: {
-                    error: { type: "string", example: "Product not found" },
-                },
-            },
-            ValidationErrorResponse: {
-                type: "object",
-                properties: {
-                    error: { type: "string", example: "Validation error" },
-                    details: {
-                        type: "array",
-                        items: { type: "string" },
-                        example: ["name is required"],
-                    },
-                },
-            },
-        },
-    },
+const productsFile = path.join(dataDir, "products.json");
+const usersFile = path.join(dataDir, "users.json");
+
+const JWT_SECRET = "access_secret"; 
+const ACCESS_EXPIRES_IN = "15m";
+const REFRESH_SECRET = "refresh_secret";
+const REFRESH_EXPIRES_IN = "7d";
+const ROLES = {
+    USER: "user",
+    SELLER: "seller",
+    ADMIN: "admin",
 };
-const swaggerSpec = swaggerJsdoc({
-    definition: swaggerDefinition,
-    apis: [__filename],
-});
 
-app.use(
-    cors({
-        origin: "http://localhost:3001",
-        methods: ["GET", "POST", "PATCH", "DELETE"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
-);
-
-app.use(express.json());
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
-app.get("/api-docs.json", (req, res) => {
-    res.json(swaggerSpec);
-});
-
-app.use((req, res, next) => {
-    res.on("finish", () => {
-        console.log(`[${new Date().toISOString()}] ${req.method} ${res.statusCode} ${req.path}`);
-        if (["POST", "PATCH", "PUT"].includes(req.method)) {
-            console.log("Body:", req.body);
-        }
-    });
-    next();
-});
-
-function getDefaultProducts() {
-    return [
-        {
-            id: nanoid(6),
-            name: "Aurora Mechanical Keyboard",
-            category: "Peripherals",
-            description: "Compact 75% keyboard with hot-swap switches and RGB.",
-            price: 109.99,
-            stock: 24,
-            rating: 4.7,
-            imageUrl: "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Pulse Wireless Mouse",
-            category: "Peripherals",
-            description: "Lightweight gaming mouse with 26K DPI sensor.",
-            price: 59.5,
-            stock: 41,
-            rating: 4.5,
-            imageUrl: "https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Nebula 27 Monitor",
-            category: "Displays",
-            description: "27-inch IPS 165Hz monitor with 1440p resolution.",
-            price: 299.0,
-            stock: 12,
-            rating: 4.8,
-            imageUrl: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Drift USB-C Dock",
-            category: "Accessories",
-            description: "8-in-1 USB-C dock with HDMI, Ethernet and SD slots.",
-            price: 79.0,
-            stock: 33,
-            rating: 4.4,
-            imageUrl: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Echo Studio Headset",
-            category: "Audio",
-            description: "Closed-back headset with detachable boom microphone.",
-            price: 129.0,
-            stock: 18,
-            rating: 4.6,
-            imageUrl: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Spark Portable SSD 1TB",
-            category: "Storage",
-            description: "NVMe portable SSD with up to 1050 MB/s transfer speed.",
-            price: 119.99,
-            stock: 26,
-            rating: 4.7,
-            imageUrl: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Orbit Webcam Pro",
-            category: "Streaming",
-            description: "4K webcam with auto-focus and noise-canceling mics.",
-            price: 149.0,
-            stock: 14,
-            rating: 4.3,
-            imageUrl: "https://images.unsplash.com/photo-1580906853203-f82db0bd84b2?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Volt GaN Charger 100W",
-            category: "Power",
-            description: "Fast multi-port GaN charger for laptop and phone.",
-            price: 64.9,
-            stock: 57,
-            rating: 4.5,
-            imageUrl: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Atlas Laptop Stand",
-            category: "Accessories",
-            description: "Adjustable aluminum stand for 13 to 17-inch laptops.",
-            price: 39.99,
-            stock: 48,
-            rating: 4.2,
-            imageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: nanoid(6),
-            name: "Nova Bluetooth Speaker",
-            category: "Audio",
-            description: "Portable speaker with IPX7 water resistance.",
-            price: 89.0,
-            stock: 22,
-            rating: 4.4,
-            imageUrl: "https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=800&q=80",
-        },
-    ];
-}
-
-function saveProductsToFile(nextProducts) {
-    fs.mkdirSync(dataDir, { recursive: true });
-    fs.writeFileSync(dataFile, JSON.stringify(nextProducts, null, 2), "utf8");
-}
-
-function loadProductsFromFile() {
-    if (!fs.existsSync(dataFile)) {
-        const defaultProducts = getDefaultProducts();
-        saveProductsToFile(defaultProducts);
-        return defaultProducts;
+// --- MIDDLEWARE ---
+function authMiddleware(req, res, next) {
+    const header = req.headers.authorization || "";
+    const [scheme, token] = header.split(" ");
+    if (scheme !== "Bearer" || !token) {
+        return res.status(401).json({ error: "Missing or invalid Authorization header" });
     }
-
     try {
-        const raw = fs.readFileSync(dataFile, "utf8");
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-            throw new Error("Products data must be an array");
+        const payload = jwt.verify(token, JWT_SECRET);
+        const dbUser = users.find((u) => u.id === payload.sub);
+        if (!dbUser) return res.status(401).json({ error: "User not found" });
+        if (dbUser.blocked) return res.status(403).json({ error: "User is blocked" });
+        req.user = payload;
+        req.dbUser = dbUser;
+        next();
+    } catch (err) {
+        return res.status(401).json({ error: "Invalid or expired token" });
+    }
+}
+
+function roleRank(role) {
+    switch (role) {
+        case ROLES.ADMIN:
+            return 3;
+        case ROLES.SELLER:
+            return 2;
+        case ROLES.USER:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+function requireRole(minRole) {
+    return (req, res, next) => {
+        const currentRole = req.dbUser?.role || ROLES.USER;
+        if (roleRank(currentRole) < roleRank(minRole)) {
+            return res.status(403).json({ error: "Insufficient permissions" });
         }
-        return parsed;
-    } catch (error) {
-        console.error("Failed to read products from file, restoring defaults.", error);
-        const defaultProducts = getDefaultProducts();
-        saveProductsToFile(defaultProducts);
-        return defaultProducts;
-    }
-}
-
-let products = loadProductsFromFile();
-
-function findProductOr404(id, res) {
-    const product = products.find((item) => item.id === id);
-    if (!product) {
-        res.status(404).json({ error: "Product not found" });
-        return null;
-    }
-    return product;
-}
-
-function validateString(value, fieldName, errors) {
-    if (typeof value !== "string" || !value.trim()) {
-        errors.push(`${fieldName} must be a non-empty string`);
-    }
-}
-
-function validateNumber(value, fieldName, errors, { min = 0, integer = false } = {}) {
-    if (!Number.isFinite(Number(value))) {
-        errors.push(`${fieldName} must be a valid number`);
-        return;
-    }
-
-    const parsed = Number(value);
-    if (parsed < min) {
-        errors.push(`${fieldName} must be >= ${min}`);
-    }
-    if (integer && !Number.isInteger(parsed)) {
-        errors.push(`${fieldName} must be an integer`);
-    }
-}
-
-function validateProductPayload(body, { partial = false } = {}) {
-    if (!body || typeof body !== "object") {
-        return ["Request body must be a JSON object"];
-    }
-
-    const errors = [];
-    const requiredFields = ["name", "category", "description", "price", "stock"];
-
-    if (!partial) {
-        requiredFields.forEach((field) => {
-            if (body[field] === undefined) {
-                errors.push(`${field} is required`);
-            }
-        });
-    }
-
-    if (body.name !== undefined) validateString(body.name, "name", errors);
-    if (body.category !== undefined) validateString(body.category, "category", errors);
-    if (body.description !== undefined) validateString(body.description, "description", errors);
-    if (body.price !== undefined) validateNumber(body.price, "price", errors, { min: 0 });
-    if (body.stock !== undefined) validateNumber(body.stock, "stock", errors, { min: 0, integer: true });
-
-    if (body.rating !== undefined) {
-        validateNumber(body.rating, "rating", errors, { min: 0 });
-        if (Number(body.rating) > 5) {
-            errors.push("rating must be <= 5");
-        }
-    }
-
-    if (body.imageUrl !== undefined && body.imageUrl !== null && typeof body.imageUrl !== "string") {
-        errors.push("imageUrl must be a string");
-    }
-
-    return errors;
-}
-
-function normalizeProductInput(body) {
-    return {
-        name: body.name?.trim(),
-        category: body.category?.trim(),
-        description: body.description?.trim(),
-        price: body.price !== undefined ? Number(body.price) : undefined,
-        stock: body.stock !== undefined ? Number(body.stock) : undefined,
-        rating: body.rating !== undefined ? Number(body.rating) : undefined,
-        imageUrl: body.imageUrl !== undefined ? String(body.imageUrl).trim() : undefined,
+        next();
     };
 }
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     User:
- *       type: object
- *       required:
- *         - id
- *         - name
- *         - category
- *         - description
- *         - price
- *         - stock
- *       properties:
- *         id:
- *           type: string
- *           example: prd001
- *         name:
- *           type: string
- *           example: Aurora Mechanical Keyboard
- *         category:
- *           type: string
- *           example: Peripherals
- *         description:
- *           type: string
- *           example: Compact 75% keyboard with hot-swap switches and RGB.
- *         price:
- *           type: number
- *           format: float
- *           minimum: 0
- *           example: 109.99
- *         stock:
- *           type: integer
- *           minimum: 0
- *           example: 24
- *         rating:
- *           type: number
- *           format: float
- *           minimum: 0
- *           maximum: 5
- *           example: 4.7
- *         imageUrl:
- *           type: string
- *           nullable: true
- *           example: https://example.com/image.jpg
- */
+function getRefreshTokenFromHeaders(req) {
+    const header = req.headers["x-refresh-token"] || req.headers["x-refresh"] || "";
+    if (header) return header;
+    const auth = req.headers.authorization || "";
+    const [scheme, token] = auth.split(" ");
+    if (scheme === "Bearer" && token) return token;
+    return "";
+}
 
-/**
- * @swagger
- * /api/products:
- *   get:
- *     tags: [Products]
- *     summary: Get all products
- *     description: Returns all products. You can optionally filter by category with the `category` query parameter.
- *     parameters:
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *         required: false
- *         description: Filter products by category.
- *     responses:
- *       200:
- *         description: Products list.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
- */
-app.get("/api/products", (req, res) => {
-    const category = req.query.category?.trim().toLowerCase();
-    const result = category
-        ? products.filter((item) => item.category.toLowerCase() === category)
-        : products;
+function issueTokens(user) {
+    const accessToken = jwt.sign(
+        { sub: user.id, username: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: ACCESS_EXPIRES_IN }
+    );
+    const refreshToken = jwt.sign(
+        { sub: user.id },
+        REFRESH_SECRET,
+        { expiresIn: REFRESH_EXPIRES_IN }
+    );
+    if (!Array.isArray(user.refresh_tokens)) user.refresh_tokens = [];
+    user.refresh_tokens.push(refreshToken);
+    save(usersFile, users);
+    return { accessToken, refreshToken };
+}
 
-    res.json(result);
+// Данные для "быстрого" входа (сидирование)
+const SEED_USER = {
+    email: "admin@test.com",
+    password: "123",
+    first_name: "Арина",
+    last_name: "Грязнова",
+    role: ROLES.ADMIN
+};
+
+// --- SWAGGER С АВТОЗАПОЛНЕНИЕМ ПОЛЕЙ ---
+const swaggerDocument = {
+  openapi: "3.0.3",
+  info: { title: "Store API JWT", version: "1.1.0" },
+  servers: [{ url: `http://localhost:${port}` }],
+  components: {
+    securitySchemes: {
+      bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" }
+    },
+    schemas: {
+      TokenPair: {
+        type: "object",
+        properties: {
+          accessToken: { type: "string" },
+          refreshToken: { type: "string" }
+        }
+      },
+      User: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "u1" },
+          email: { type: "string", example: SEED_USER.email },
+          first_name: { type: "string", example: SEED_USER.first_name },
+          last_name: { type: "string", example: SEED_USER.last_name }
+        }
+      },
+      RegisterInput: {
+        type: "object",
+        required: ["email", "password"],
+        properties: {
+          email: { type: "string", example: SEED_USER.email },
+          password: { type: "string", example: SEED_USER.password },
+          first_name: { type: "string", example: SEED_USER.first_name },
+          last_name: { type: "string", example: SEED_USER.last_name }
+        }
+      },
+      LoginInput: {
+        type: "object",
+        required: ["email", "password"],
+        properties: {
+          email: { type: "string", example: SEED_USER.email },
+          password: { type: "string", example: SEED_USER.password }
+        }
+      },
+      Product: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "p1" },
+          title: { type: "string", example: "Notebook" },
+          category: { type: "string", example: "Electronics" },
+          description: { type: "string", example: "Lightweight laptop" },
+          price: { type: "number", example: 999 }
+        }
+      },
+      ProductInput: {
+        type: "object",
+        properties: {
+          title: { type: "string", example: "Notebook" },
+          category: { type: "string", example: "Electronics" },
+          description: { type: "string", example: "Lightweight laptop" },
+          price: { type: "number", example: 999 }
+        }
+      }
+    }
+  },
+  paths: {
+    "/api/auth/register": {
+      post: {
+        tags: ["Auth"],
+        summary: "Регистрация пользователя",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RegisterInput" }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: "Created",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/User" } } }
+          },
+          409: { description: "User already exists" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      post: {
+        tags: ["Auth"],
+        summary: "Вход в систему",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/LoginInput" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "OK",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/TokenPair" } } }
+          },
+          401: { description: "Invalid credentials" }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      post: {
+        tags: ["Auth"],
+        summary: "Обновление пары токенов",
+        parameters: [
+          {
+            name: "x-refresh-token",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "Refresh токен"
+          }
+        ],
+        responses: {
+          200: { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/TokenPair" } } } },
+          401: { description: "Invalid refresh token" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      get: {
+        tags: ["Auth"],
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/User" } } } },
+          401: { description: "Unauthorized" }
+        }
+      }
+    },
+    "/api/products": {
+      get: {
+        tags: ["Products"],
+        responses: {
+          200: { description: "OK", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Product" } } } } }
+        }
+      },
+      post: {
+        tags: ["Products"],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/ProductInput" } } }
+        },
+        responses: {
+          201: { description: "Created", content: { "application/json": { schema: { $ref: "#/components/schemas/Product" } } } }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      get: {
+        tags: ["Products"],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          200: { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/Product" } } } },
+          404: { description: "Product not found" }
+        }
+      },
+      put: {
+        tags: ["Products"],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/ProductInput" } } }
+        },
+        responses: {
+          200: { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/Product" } } } },
+          404: { description: "Product not found" }
+        }
+      },
+      delete: {
+        tags: ["Products"],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          204: { description: "No Content" },
+          401: { description: "Unauthorized" },
+          404: { description: "Product not found" }
+        }
+      }
+    }
+  }
+};
+
+app.use(cors());
+app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// --- РАБОТА С ФАЙЛАМИ И СИДИРОВАНИЕ ---
+const load = (f) => fs.existsSync(f) ? JSON.parse(fs.readFileSync(f)) : [];
+const save = (f, d) => {
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+    fs.writeFileSync(f, JSON.stringify(d, null, 2));
+};
+
+let products = load(productsFile);
+let users = load(usersFile);
+
+const normalizeProductIds = () => {
+    const used = new Set();
+    let next = 1;
+    let changed = false;
+
+    const takeNextAvailable = () => {
+        while (used.has(next)) next += 1;
+        const value = next;
+        used.add(value);
+        next += 1;
+        return value;
+    };
+
+    const parseNumericId = (id) => {
+        if (typeof id === "number" && Number.isFinite(id)) return id;
+        const str = String(id ?? "");
+        const digits = str.match(/\d+/g);
+        if (!digits) return null;
+        const num = Number(digits.join(""));
+        return Number.isFinite(num) && num > 0 ? num : null;
+    };
+
+    products = products.map((p) => {
+        const parsed = parseNumericId(p.id);
+        let newId = parsed;
+        if (!newId || used.has(newId)) {
+            newId = takeNextAvailable();
+        } else {
+            used.add(newId);
+        }
+        if (newId !== p.id) changed = true;
+        return { ...p, id: newId };
+    });
+
+    if (changed) {
+        save(productsFile, products);
+    }
+};
+
+normalizeProductIds();
+let nextProductId = products.reduce((max, p) => Math.max(max, Number(p.id) || 0), 0) + 1;
+
+let usersChanged = false;
+users = users.map((u) => {
+    const normalized = {
+        ...u,
+        role: u.role ?? (u.email === SEED_USER.email ? ROLES.ADMIN : ROLES.USER),
+        blocked: u.blocked ?? false,
+        refresh_tokens: Array.isArray(u.refresh_tokens) ? u.refresh_tokens : [],
+    };
+    if (normalized.role !== u.role || normalized.blocked !== u.blocked || normalized.refresh_tokens !== u.refresh_tokens) {
+        usersChanged = true;
+    }
+    return normalized;
+});
+if (usersChanged) {
+    save(usersFile, users);
+}
+
+// Если файл users.json пустой, создаем админа автоматически
+if (users.length === 0) {
+    const hash = bcrypt.hashSync(SEED_USER.password, 10);
+    users.push({ id: "seed-id", ...SEED_USER, password: hash, refresh_tokens: [], blocked: false });
+    save(usersFile, users);
+    console.log("Тестовый пользователь создан: " + SEED_USER.email);
+}
+
+// --- МАРШРУТЫ ---
+app.post("/api/auth/register", async (req, res) => {
+    const { email, first_name, last_name, password } = req.body || {};
+    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+    if (users.some(u => u.email === email)) {
+        return res.status(409).json({ error: "User already exists" });
+    }
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = {
+        id: nanoid(8),
+        email,
+        first_name,
+        last_name,
+        password: hashed,
+        refresh_tokens: [],
+        role: ROLES.USER,
+        blocked: false,
+    };
+    users.push(newUser);
+    save(usersFile, users);
+    res.status(201).json({ id: newUser.id, email: newUser.email });
 });
 
-/**
- * @swagger
- * /api/products/{id}:
- *   get:
- *     tags: [Products]
- *     summary: Get user by id
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: User found.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-app.get("/api/products/:id", (req, res) => {
-    const product = findProductOr404(req.params.id, res);
-    if (!product) return;
+app.post("/api/auth/login", async (req, res) => {
+    const { email, password } = req.body || {};
+    const user = users.find(u => u.email === email);
+    if (user && user.blocked) {
+        return res.status(403).json({ error: "User is blocked" });
+    }
+    if (user && await bcrypt.compare(password, user.password)) {
+        const tokens = issueTokens(user);
+        return res.json(tokens);
+    }
+    res.status(401).json({ error: "Invalid credentials" });
+});
+
+app.post("/api/auth/refresh", (req, res) => {
+    const refreshToken = getRefreshTokenFromHeaders(req);
+    if (!refreshToken) return res.status(401).json({ error: "Missing refresh token" });
+    try {
+        const payload = jwt.verify(refreshToken, REFRESH_SECRET);
+        const user = users.find(u => u.id === payload.sub);
+        if (!user || !Array.isArray(user.refresh_tokens) || !user.refresh_tokens.includes(refreshToken)) {
+            return res.status(401).json({ error: "Invalid refresh token" });
+        }
+        if (user.blocked) return res.status(403).json({ error: "User is blocked" });
+        user.refresh_tokens = user.refresh_tokens.filter(t => t !== refreshToken);
+        const tokens = issueTokens(user);
+        return res.json(tokens);
+    } catch (err) {
+        return res.status(401).json({ error: "Invalid or expired refresh token" });
+    }
+});
+
+app.get("/api/auth/me", authMiddleware, (req, res) => {
+    const user = users.find(u => u.id === req.user.sub);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+        blocked: user.blocked,
+    });
+});
+
+app.get("/api/products", authMiddleware, requireRole(ROLES.USER), (req, res) => res.json(products));
+app.post("/api/products", authMiddleware, requireRole(ROLES.SELLER), (req, res) => {
+    const {
+        title,
+        name,
+        category,
+        description,
+        price,
+        stock,
+        rating,
+        imageUrl
+    } = req.body || {};
+    const newP = {
+        id: nextProductId,
+        title: title ?? name,
+        category,
+        description,
+        price: Number(price),
+        stock: stock != null ? Number(stock) : undefined,
+        rating: rating != null ? Number(rating) : undefined,
+        imageUrl: imageUrl || ""
+    };
+    products.push(newP);
+    nextProductId += 1;
+    save(productsFile, products);
+    res.status(201).json(newP);
+});
+
+app.get("/api/products/:id", authMiddleware, requireRole(ROLES.USER), (req, res) => {
+    const product = products.find(p => String(p.id) === String(req.params.id));
+    if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
 });
 
-/**
- * @swagger
- * /api/products:
- *   post:
- *     tags: [Products]
- *     summary: Create user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserInput'
- *     responses:
- *       201:
- *         description: User created.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       400:
- *         description: Validation error.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ValidationErrorResponse'
- */
-app.post("/api/products", (req, res) => {
-    const errors = validateProductPayload(req.body, { partial: false });
-    if (errors.length) {
-        return res.status(400).json({ error: "Validation error", details: errors });
-    }
-
-    const normalized = normalizeProductInput(req.body);
-    const newProduct = {
-        id: nanoid(6),
-        name: normalized.name,
-        category: normalized.category,
-        description: normalized.description,
-        price: normalized.price,
-        stock: normalized.stock,
-        rating: normalized.rating ?? 0,
-        imageUrl: normalized.imageUrl || "",
+app.put("/api/products/:id", authMiddleware, requireRole(ROLES.SELLER), (req, res) => {
+    const idx = products.findIndex(p => String(p.id) === String(req.params.id));
+    if (idx === -1) return res.status(404).json({ error: "Product not found" });
+    const {
+        title,
+        name,
+        category,
+        description,
+        price,
+        stock,
+        rating,
+        imageUrl
+    } = req.body || {};
+    const updated = {
+        ...products[idx],
+        title: title ?? name ?? products[idx].title,
+        category: category ?? products[idx].category,
+        description: description ?? products[idx].description,
+        price: price != null ? Number(price) : products[idx].price,
+        stock: stock != null ? Number(stock) : products[idx].stock,
+        rating: rating != null ? Number(rating) : products[idx].rating,
+        imageUrl: imageUrl != null ? imageUrl : products[idx].imageUrl
     };
-
-    products.push(newProduct);
-    saveProductsToFile(products);
-    return res.status(201).json(newProduct);
+    products[idx] = updated;
+    save(productsFile, products);
+    res.json(updated);
 });
 
-/**
- * @swagger
- * /api/products/{id}:
- *   patch:
- *     tags: [Products]
- *     summary: Update user by id
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserPatchInput'
- *     responses:
- *       200:
- *         description: User updated.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       400:
- *         description: Validation error.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ValidationErrorResponse'
- *       404:
- *         description: User not found.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-app.patch("/api/products/:id", (req, res) => {
-    const product = findProductOr404(req.params.id, res);
-    if (!product) return;
+app.delete("/api/products/:id", authMiddleware, requireRole(ROLES.ADMIN), (req, res) => {
+    const before = products.length;
+    products = products.filter(p => String(p.id) !== String(req.params.id));
+    if (products.length === before) return res.status(404).json({ error: "Product not found" });
+    save(productsFile, products);
+    res.status(204).send();
+});
 
-    if (!Object.keys(req.body || {}).length) {
-        return res.status(400).json({ error: "Nothing to update" });
-    }
+app.get("/api/users", authMiddleware, requireRole(ROLES.ADMIN), (req, res) => {
+    const list = users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        role: u.role,
+        blocked: u.blocked,
+    }));
+    res.json(list);
+});
 
-    const errors = validateProductPayload(req.body, { partial: true });
-    if (errors.length) {
-        return res.status(400).json({ error: "Validation error", details: errors });
-    }
-
-    const normalized = normalizeProductInput(req.body);
-    Object.entries(normalized).forEach(([key, value]) => {
-        if (value !== undefined) {
-            product[key] = value;
-        }
+app.get("/api/users/:id", authMiddleware, requireRole(ROLES.ADMIN), (req, res) => {
+    const user = users.find((u) => u.id === req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+        blocked: user.blocked,
     });
-
-    saveProductsToFile(products);
-    return res.json(product);
 });
 
-/**
- * @swagger
- * /api/products/{id}:
- *   delete:
- *     tags: [Products]
- *     summary: Delete user by id
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       204:
- *         description: User deleted.
- *       404:
- *         description: User not found.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-app.delete("/api/products/:id", (req, res) => {
-    const exists = products.some((item) => item.id === req.params.id);
-    if (!exists) {
-        return res.status(404).json({ error: "Product not found" });
+app.put("/api/users/:id", authMiddleware, requireRole(ROLES.ADMIN), (req, res) => {
+    const idx = users.findIndex((u) => u.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "User not found" });
+    const { email, first_name, last_name, role, blocked } = req.body || {};
+    const allowedRoles = new Set([ROLES.USER, ROLES.SELLER, ROLES.ADMIN]);
+    if (role && !allowedRoles.has(role)) {
+        return res.status(400).json({ error: "Invalid role" });
     }
-
-    products = products.filter((item) => item.id !== req.params.id);
-    saveProductsToFile(products);
-    return res.status(204).send();
+    const updated = {
+        ...users[idx],
+        email: email ?? users[idx].email,
+        first_name: first_name ?? users[idx].first_name,
+        last_name: last_name ?? users[idx].last_name,
+        role: role ?? users[idx].role,
+        blocked: blocked != null ? Boolean(blocked) : users[idx].blocked,
+    };
+    users[idx] = updated;
+    save(usersFile, users);
+    res.json({
+        id: updated.id,
+        email: updated.email,
+        first_name: updated.first_name,
+        last_name: updated.last_name,
+        role: updated.role,
+        blocked: updated.blocked,
+    });
 });
 
-app.use((req, res) => {
-    res.status(404).json({ error: "Not found" });
+app.delete("/api/users/:id", authMiddleware, requireRole(ROLES.ADMIN), (req, res) => {
+    const idx = users.findIndex((u) => u.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: "User not found" });
+    users[idx].blocked = true;
+    save(usersFile, users);
+    res.status(204).send();
 });
 
-app.use((err, req, res, next) => {
-    console.error("Unhandled error:", err);
-    res.status(500).json({ error: "Internal server error" });
-});
-
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+app.listen(port, () => console.log(`Сервер: http://localhost:${port}`));

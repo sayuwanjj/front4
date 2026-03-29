@@ -15,7 +15,7 @@ export default function UserModal({ open, mode, initialProduct, onClose, onSubmi
         if (!open) return;
 
         setForm({
-            name: initialProduct?.name ?? "",
+            name: initialProduct?.name ?? initialProduct?.title ?? "",
             category: initialProduct?.category ?? "",
             description: initialProduct?.description ?? "",
             price: initialProduct?.price != null ? String(initialProduct.price) : "",

@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import UserItem from "./UserItem";
 
-export default function UsersList({ products, onEdit, onDelete }) {
+export default function UsersList({ products, onEdit, onDelete, onView }) {
     if (!products.length) {
         return <div className="empty">No products yet.</div>;
     }
@@ -14,6 +14,7 @@ export default function UsersList({ products, onEdit, onDelete }) {
                     product={product}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onView={onView}
                 />
             ))}
         </div>

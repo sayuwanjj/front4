@@ -1,0 +1,52 @@
+[
+  {
+    "id": "seed-id",
+    "email": "admin@test.com",
+    "password": "$2b$10$IbFbGP0Z3b/1n6RZRccqGOXF77xd5K8Zeg3FrTitF.q6aGudn5W5G",
+    "first_name": "Арина",
+    "last_name": "Грязнова",
+    "role": "admin",
+    "blocked": false,
+    "refresh_tokens": [
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWVkLWlkIiwiaWF0IjoxNzc0ODA1MjcwLCJleHAiOjE3NzU0MTAwNzB9.N9Wdl42XB7K7L12iv9YDpkOcuImORedWRLrWd0NHWJE",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWVkLWlkIiwiaWF0IjoxNzc0ODA1NjExLCJleHAiOjE3NzU0MTA0MTF9.TaOdoqxkDaavKy2z1PuEWrtePH40a8o1ov8c97aNWBA"
+    ]
+  },
+  {
+    "id": "seller-1",
+    "email": "seller@test.com",
+    "password": "$2b$10$IbFbGP0Z3b/1n6RZRccqGOXF77xd5K8Zeg3FrTitF.q6aGudn5W5G",
+    "first_name": "Сергей",
+    "last_name": "Иванов",
+    "role": "seller",
+    "blocked": false,
+    "refresh_tokens": [
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWxsZXItMSIsImlhdCI6MTc3NDgwNTMxMCwiZXhwIjoxNzc1NDEwMTEwfQ.e9OPoGsxNZl3UzkeWSTQDT3YQd9kRtQgowNPUgY3dNM"
+    ]
+  },
+  {
+    "id": "user-1",
+    "email": "user@test.com",
+    "password": "$2b$10$IbFbGP0Z3b/1n6RZRccqGOXF77xd5K8Zeg3FrTitF.q6aGudn5W5G",
+    "first_name": "Ольга",
+    "last_name": "Петрова",
+    "role": "user",
+    "blocked": false,
+    "refresh_tokens": [
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEiLCJpYXQiOjE3NzQ4MDUzMjgsImV4cCI6MTc3NTQxMDEyOH0.8Y67UKu8Ld9dUOihxuESH35TOer8GI3Vk7dU0zcjxwA",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEiLCJpYXQiOjE3NzQ4MDU0MTgsImV4cCI6MTc3NTQxMDIxOH0.m6H-N3Jh6Nu9fIi2y55ICXWOqH5qjnVzEus4_dlQcF8",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEiLCJpYXQiOjE3NzQ4MDU1MDIsImV4cCI6MTc3NTQxMDMwMn0.ZvdhZV73XgFKaGL4zmaRGet7CMH6XNltSRq-FheAObE",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEiLCJpYXQiOjE3NzQ4MDU1MjgsImV4cCI6MTc3NTQxMDMyOH0.A4nPVE6JJYaQvSERgoFr1RdLD5XB9DK8PiDWctXvBms"
+    ]
+  },
+  {
+    "id": "user-2",
+    "email": "viewer@test.com",
+    "password": "$2b$10$NS6dJyYHnoEBzXJyGPPT3e5P4b91hHxNZqRs.LCZoI/fCvJ7fiOZe",
+    "first_name": "Дмитрий",
+    "last_name": "Смирнов",
+    "role": "user",
+    "blocked": false,
+    "refresh_tokens": []
+  }
+]
